@@ -1,0 +1,82 @@
+# Bazzite ujust Picker
+
+A TUI application to browse and run ujust recipes in Bazzite.
+
+## Installation
+
+### From Binary Release
+
+Download the latest release from the [releases page](https://github.com/xxjsonderuloxx/bazzite-ujust-picker/releases).
+
+```bash
+# Extract and install to /usr/local/bin
+sudo tar -xzf ujust-picker_Linux_x86_64.tar.gz -C /usr/local/bin ujust-picker
+```
+
+### From Source
+
+```bash
+# Clone the repository
+git clone https://github.com/xxjsonderuloxx/bazzite-ujust-picker.git
+cd bazzite-ujust-picker
+
+# Build and install
+go build -o ujust-picker
+sudo cp ujust-picker /usr/local/bin/
+```
+
+## Usage
+
+Simply run the picker and navigate using keyboard controls:
+
+```bash
+ujust-picker
+```
+
+### Controls
+
+- **←/→**: Navigate between categories
+- **↑/↓**: Navigate recipes
+- **Enter**: Select and run recipe
+- **Esc/q/Ctrl+C**: Exit
+
+## Development
+
+### Requirements
+
+- Go 1.24 or later
+
+### Setup Development Environment
+
+```bash
+# Clone the repository
+git clone https://github.com/xxjsonderuloxx/bazzite-ujust-picker.git
+cd bazzite-ujust-picker
+
+# Install dependencies
+go mod tidy
+
+# Run in development mode
+go run .
+```
+
+### Building
+
+```bash
+go build -o ujust-picker
+```
+
+### CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and delivery:
+
+- Pushing to the `main` branch automatically creates a new version tag and triggers a release
+- The workflow increments the patch version for each push to `main`
+- Binary builds are created for Linux (x86_64 and arm64)
+- Releases are automatically published to GitHub Releases
+
+The workflow configuration is in `.github/workflows/release.yml` and uses GoReleaser for building and packaging.
+
+## License
+
+MIT
