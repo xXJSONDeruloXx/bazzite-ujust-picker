@@ -13,7 +13,7 @@ builds:
     main: .
     binary: ujust-picker
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+      - -s -w -X main.version={{.Tag}} -X main.commit={{.Commit}} -X main.date={{.Date}}
 
 archives:
   - format: tar.gz
@@ -31,7 +31,11 @@ checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  name_template: "{{ .Tag }}-next"
+
+# Allow any tag format, not just semver
+git:
+  prerelease_suffix: "-pre"
 
 changelog:
   sort: asc

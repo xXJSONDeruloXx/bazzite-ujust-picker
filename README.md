@@ -70,8 +70,9 @@ go build -o ujust-picker
 
 This project uses GitHub Actions for continuous integration and delivery:
 
-- Pushing to the `main` branch automatically creates a new version tag and triggers a release
-- The workflow increments the patch version for each push to `main`
+- Pushing to the `main` branch automatically creates a new tag and triggers a release
+- Tags are created using the current date (YYYY-MM-DD) format
+- Multiple releases on the same day will have an incrementing counter (e.g., 2025-05-31.1, 2025-05-31.2)
 - Binary builds are created for Linux (x86_64 and arm64)
 - Releases are automatically published to GitHub Releases
 
