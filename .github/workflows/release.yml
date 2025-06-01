@@ -24,51 +24,14 @@ jobs:
 
       - name: Generate Tag and Release
         run: |
-          # Get the current date in YYYY-MM-DD format
-          CURRENT_DATE=$(date +"%Y-%m-%d")
-          
-          # Fetch all tags
-          git fetch --tags
-          
-          # Check if there are any tags for today
-          TODAY_TAGS=$(git tag -l "$CURRENT_DATE*" --sort=-committerdate)
-          
-          if [ -z "$TODAY_TAGS" ]; then
-            # No tags for today yet, create the first one
-            NEW_TAG="$CURRENT_DATE"
-          else
-            # Get the latest tag for today
-            LATEST_TODAY_TAG=$(echo "$TODAY_TAGS" | head -n 1)
-            
-            # Check if the tag has a counter suffix
-            if [[ "$LATEST_TODAY_TAG" =~ $CURRENT_DATE\.(.*) ]]; then
-              # Extract the counter and increment it
-              COUNTER="${BASH_REMATCH[1]}"
-              NEXT_COUNTER=$((COUNTER + 1))
-              NEW_TAG="$CURRENT_DATE.$NEXT_COUNTER"
-            else
-              # First counter for today
-              NEW_TAG="$CURRENT_DATE.1"
-            fi
-          fi
+          # Get the current date and time in YYYY-MM-DD-HHMMSS format
+          NEW_TAG=$(date +"%Y-%m-%d-%H%M%S")
           
           echo "Creating new tag: $NEW_TAG"
           
           # Configure Git
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
-          # Check if tag already exists locally and delete it if it does
-          if git tag -l | grep -q "^$NEW_TAG$"; then
-            echo "Tag $NEW_TAG already exists locally, deleting it first"
-            git tag -d $NEW_TAG
-          fi
-          
-          # Check if tag exists on remote and delete it if it does
-          if git ls-remote --tags origin | grep -q "refs/tags/$NEW_TAG$"; then
-            echo "Tag $NEW_TAG already exists on remote, deleting it first"
-            git push origin --delete $NEW_TAG || true
-          fi
           
           # Create and push tag
           git tag -a $NEW_TAG -m "Auto-generated release $NEW_TAG"
@@ -99,55 +62,3 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Generate Additional Tag
-        run: |
-          # Get the current date in YYYY-MM-DD format
-          CURRENT_DATE=$(date +"%Y-%m-%d")
-          
-          # Fetch all tags
-          git fetch --tags
-          
-          # Check if there are any tags for today
-          TODAY_TAGS=$(git tag -l "$CURRENT_DATE*" --sort=-committerdate)
-          
-          if [ -z "$TODAY_TAGS" ]; then
-            # No tags for today yet, create the first one
-            NEW_TAG="$CURRENT_DATE"
-          else
-            # Get the latest tag for today
-            LATEST_TODAY_TAG=$(echo "$TODAY_TAGS" | head -n 1)
-            
-            # Check if the tag has a counter suffix
-            if [[ "$LATEST_TODAY_TAG" =~ $CURRENT_DATE\.(.*) ]]; then
-              # Extract the counter and increment it
-              COUNTER="${BASH_REMATCH[1]}"
-              NEXT_COUNTER=$((COUNTER + 1))
-              NEW_TAG="$CURRENT_DATE.$NEXT_COUNTER"
-            else
-              # First counter for today
-              NEW_TAG="$CURRENT_DATE.1"
-            fi
-          fi
-          
-          echo "Creating new tag: $NEW_TAG"
-          
-          # Configure Git
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          
-          # Check if tag already exists locally and delete it if it does
-          if git tag -l | grep -q "^$NEW_TAG$"; then
-            echo "Tag $NEW_TAG already exists locally, deleting it first"
-            git tag -d $NEW_TAG
-          fi
-          
-          # Check if tag exists on remote and delete it if it does
-          if git ls-remote --tags origin | grep -q "refs/tags/$NEW_TAG$"; then
-            echo "Tag $NEW_TAG already exists on remote, deleting it first"
-            git push origin --delete $NEW_TAG || true
-          fi
-          
-          # Create and push tag
-          git tag -a $NEW_TAG -m "Auto-generated release $NEW_TAG"
-          git push origin $NEW_TAG
