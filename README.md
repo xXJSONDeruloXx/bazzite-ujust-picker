@@ -2,6 +2,9 @@
 
 A TUI application to browse and run ujust recipes in Bazzite.
 
+<img width="525" alt="image" src="https://github.com/user-attachments/assets/cd0d3d3b-46d2-4e95-90a3-1f94a7496d45" />
+
+
 ## Installation
 
 ### From Binary Release
