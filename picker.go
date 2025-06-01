@@ -38,13 +38,13 @@ var runRecipe string
 var (
 	layoutWidth    = 72
 	appBorder      = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Width(layoutWidth)
-	titleStyle     = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("15"))
-	catSelected    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00afff")).Underline(true)
-	catInactive    = lipgloss.NewStyle().Faint(true)
-	recipeActive   = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
-	recipeInactive = lipgloss.NewStyle().Foreground(lipgloss.Color("7"))
-	descText       = lipgloss.NewStyle().Padding(1, 0).Width(layoutWidth - 4)
-	controlStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("8")).Italic(true)
+	titleStyle     = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#faebd7"))                           // Bazzite white
+	catSelected    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00afff")).Underline(true)           // Bazzite blue
+	catInactive    = lipgloss.NewStyle().Foreground(lipgloss.Color("#a8a8a8"))                                      // Bazzite dark grey
+	recipeActive   = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff1492")).Bold(true)                           // Bazzite pink/magenta
+	recipeInactive = lipgloss.NewStyle().Foreground(lipgloss.Color("#a8a8a8"))                                      // Bazzite dark grey
+	descText       = lipgloss.NewStyle().Padding(1, 0).Width(layoutWidth - 4).Foreground(lipgloss.Color("#faebd7")) // Bazzite white
+	controlStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#a8a8a8")).Italic(true)                         // Bazzite dark grey
 )
 
 func divider() string {
