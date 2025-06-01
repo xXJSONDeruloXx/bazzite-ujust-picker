@@ -1,0 +1,8 @@
+#!/bin/bash
+mkdir -p ~/.local/bin
+cat << 'EOF' > ~/.local/bin/ujust
+#!/bin/bash
+echo "Running ujust $@"
+EOF
+
+chmod +x ~/.local/bin/ujust
