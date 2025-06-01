@@ -87,13 +87,8 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Generate Tag and Release
+          
+      - name: Generate Additional Tag
         run: |
           # Get the current date in YYYY-MM-DD format
           CURRENT_DATE=$(date +"%Y-%m-%d")
