@@ -12,6 +12,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Version information - will be set at build time
@@ -114,7 +116,7 @@ func cleanCategoryName(filename string) string {
 	name = regexp.MustCompile(`^[0-9]+-`).ReplaceAllString(name, "")
 	parts := strings.Split(name, "-")
 	for i, part := range parts {
-		parts[i] = strings.Title(part)
+		parts[i] = cases.Title(language.English).String(part)
 	}
 	return strings.Join(parts, " ")
 }
@@ -234,7 +236,7 @@ func main() {
 	}
 
 	p := tea.NewProgram(initialModel())
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
