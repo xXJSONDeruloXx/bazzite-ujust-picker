@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -35,8 +36,10 @@ type model struct {
 	currentTab     int
 	selectedRecipe int
 	showCode       bool
+	dualView       bool
 	ready          bool
-	viewport       viewport.Model
+	mainViewport   viewport.Model
+	codeViewport   viewport.Model
 	height         int
 	width          int
 	actualWidth    int
@@ -151,13 +154,28 @@ func cleanCategoryName(filename string) string {
 func (m model) Init() tea.Cmd { return nil }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
 	switch msg := msg.(type) {
 	case tea.MouseMsg:
 		switch msg.Button {
 		case tea.MouseButtonWheelUp:
-			m.changeRecipeScroll("up")
+			if msg.X < 80 {
+				if m.showCode && !m.dualView {
+					break // Dont scroll if single view and showing code
+				}
+				m.changeRecipeScroll("up")
+			}
 		case tea.MouseButtonWheelDown:
-			m.changeRecipeScroll("down")
+			if msg.X < 80 {
+				if m.showCode && !m.dualView {
+					break // Dont scroll if single view and showing code
+				}
+				m.changeRecipeScroll("down")
+			}
 		case tea.MouseButtonLeft:
 			// m.debug = fmt.Sprintf("(X: %d, Y: %d) %s", msg.X, msg.Y, tea.MouseEvent(msg))
 			if msg.Action != tea.MouseActionRelease {
@@ -169,17 +187,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else if msg.X >= 53 && msg.X <= 80 { // Right Tab Position
 					m.changeTab("right")
 				}
-			} else if msg.Y >= 7 && msg.X < 80 { // Recipe List Position
-				clickedRecipeIndex := msg.Y - 7 + m.viewport.YOffset
+			} else if msg.Y >= 8 && msg.X < 80 { // Recipe List Position
+				clickedRecipeIndex := msg.Y - 8 + m.mainViewport.YOffset
 				if clickedRecipeIndex == m.selectedRecipe {
 					return m.runRecipe()
 				}
 				if clickedRecipeIndex < len(m.currentRecipes()) {
 					m.selectedRecipe = clickedRecipeIndex
 				}
+			} else if m.showCode && !m.dualView {
+				if msg.X == 2 && msg.Y == 1 { // Back Button
+					m.showCode = false
+				}
 			}
 		}
-		m.scrollViewport()
+		m.updateModel()
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "left":
@@ -192,37 +214,62 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.changeRecipeScroll("down")
 		case "enter":
 			return m.runRecipe()
-		case "n":
-			m.showCode = true
+		case "c":
+			m.showCode = !m.showCode
 		case "esc", "q", "ctrl+c":
 			return m, tea.Quit
 		}
-		m.scrollViewport()
+		m.updateModel()
 	case tea.WindowSizeMsg:
+		// Update terminal size
 		m.height = msg.Height
-		m.actualWidth = min(msg.Width, m.width)
-		headerHeight := lipgloss.Height(m.headerView())
-		footerHeight := lipgloss.Height(m.footerView())
-		verticalMarginHeight := headerHeight + footerHeight
-		viewportHeight := msg.Height - verticalMarginHeight
-		if viewportHeight <= 3 || msg.Width < m.width {
+		m.actualWidth = msg.Width
+
+		// Main Viewport
+		mainHeaderHeight := lipgloss.Height(m.headerView())
+		mainFooterHeight := lipgloss.Height(m.footerView())
+		verticalMarginHeight := mainHeaderHeight + mainFooterHeight
+		mainViewportHeight := msg.Height - verticalMarginHeight
+
+		// Code Viewport
+		codeHeaderHeight := lipgloss.Height(m.codeHeaderView())
+		codeViewportHeight := msg.Height - codeHeaderHeight
+
+		// Check minimal size
+		if mainViewportHeight <= 3 || msg.Width < m.width {
 			m.tooSmall = true
 		} else {
 			m.tooSmall = false
 		}
+		// For code viewer
+		m.dualView = m.actualWidth >= m.width*2
 
 		if !m.ready {
-			m.viewport = viewport.New(msg.Width, viewportHeight)
-			m.viewport.Style = lipgloss.NewStyle().Width(m.width).Border(lipgloss.NormalBorder(), false, true)
-			m.viewport.YPosition = headerHeight
+			// Main Viewport Init
+			m.mainViewport = viewport.New(m.width, mainViewportHeight)
+			m.mainViewport = viewport.New(msg.Width, mainViewportHeight)
+			m.mainViewport.Style = lipgloss.NewStyle().Width(m.width).Border(lipgloss.NormalBorder(), false, true)
+			m.mainViewport.YPosition = mainHeaderHeight
+
+			// Code Viewport Init
+			m.codeViewport = viewport.New(m.width, codeViewportHeight)
+			m.codeViewport.Style = lipgloss.NewStyle().Width(m.width).Border(lipgloss.NormalBorder(), false, true, true)
+
 			m.ready = true
 		} else {
-			m.viewport.Width = msg.Width
-			m.viewport.Height = viewportHeight
+			m.mainViewport.Width = msg.Width
+			m.mainViewport.Height = mainViewportHeight
+			m.codeViewport.Height = codeViewportHeight
 		}
 	}
 
-	return m, nil
+	codeShowInSingleView := m.showCode && !m.dualView
+	if msg, ok := msg.(tea.MouseMsg); ok && (msg.X > 80 && msg.X < 160) || codeShowInSingleView { // Only send command in code view
+		m.codeViewport, cmd = m.codeViewport.Update(msg)
+		cmds = append(cmds, cmd)
+	}
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m model) headerView() string {
@@ -244,8 +291,10 @@ func (m model) headerView() string {
 	navLine := horizontalBorderStyle.Render(catArrow.Render("← ") + catSide.Render(left) + catMiddle.Render(center) + catSide.Render(right) + catArrow.Render(" →"))
 	header.WriteString(navLine + "\n")
 	header.WriteString(m.divider() + "\n")
-	controlText := "← → Change Category | ↑ ↓ Navigate Recipes | Enter: Select | Esc: Exit"
-	header.WriteString(controlStyle.Render(m.renderTextBlockCustom(controlText, 2, lipgloss.Center)) + "\n")
+	topControlText := "← → Change Category | ↑ ↓ Navigate Recipes"
+	bottomControlText := "c: Toggle Code | Enter: Select | Esc: Exit"
+	header.WriteString(controlStyle.Render(m.renderTextBlockCustom(topControlText, 2, lipgloss.Center)) + "\n")
+	header.WriteString(controlStyle.Render(m.renderTextBlockCustom(bottomControlText, 2, lipgloss.Center)) + "\n")
 	header.WriteString(m.divider())
 	return header.String()
 }
@@ -266,9 +315,21 @@ func (m model) footerView() string {
 	return m.divider() + "\n" + descBlock
 }
 
+func (m model) codeHeaderView() string {
+	var header strings.Builder
+	backButton := ""
+	if m.actualWidth < m.width*2 {
+		backButton = "← "
+	}
+	title := titleStyle.Render(backButton + m.currentRecipes()[m.selectedRecipe].name)
+	line := strings.Repeat("─", max(0, m.width-lipgloss.Width(title)-2))
+	header.WriteString(lipgloss.JoinHorizontal(lipgloss.Center, "\n┌\n│", title, line, "\n┐\n│"))
+	return header.String()
+}
+
 func (m model) View() string {
 	if m.tooSmall {
-		style := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Align(lipgloss.Center, lipgloss.Center).Height(m.height - 2).Width(m.actualWidth - 2)
+		style := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Align(lipgloss.Center, lipgloss.Center).Height(m.height - 2).Width(min(m.actualWidth, m.width) - 2)
 		return style.Render("Your terminal size is too small.\nPlease resize the terminal window.")
 	}
 
@@ -281,12 +342,22 @@ func (m model) View() string {
 			recipeLines = append(recipeLines, recipeInactive.Render("  "+line))
 		}
 	}
-	m.viewport.SetContent(strings.Join(recipeLines, "\n"))
+	m.mainViewport.SetContent(strings.Join(recipeLines, "\n"))
 
 	if !m.ready {
 		return "\n  Initializing..."
 	}
-	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.viewport.View(), m.footerView())
+
+	mainView := fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.mainViewport.View(), m.footerView())
+	codeView := fmt.Sprintf("%s\n%s", m.codeHeaderView(), m.codeViewport.View())
+
+	if m.showCode && m.actualWidth >= m.width*2 {
+		return lipgloss.JoinHorizontal(lipgloss.Center, mainView, codeView)
+	} else if m.showCode {
+		return codeView
+	}
+
+	return mainView
 }
 
 func (m model) currentRecipes() []recipe {
@@ -349,17 +420,39 @@ func (m model) runRecipe() (tea.Model, tea.Cmd) {
 	return m, tea.Quit
 }
 
+func (m *model) updateModel() {
+	m.scrollViewport()
+	m.fetchRecipeCode()
+}
+
 func (m *model) scrollViewport() {
-	if m.viewport.Height < len(m.currentRecipes()) {
-		visibleIndexStart := m.viewport.YOffset
-		visibleIndexStop := visibleIndexStart + m.viewport.Height - 1
+	if m.mainViewport.Height < len(m.currentRecipes()) {
+		visibleIndexStart := m.mainViewport.YOffset
+		visibleIndexStop := visibleIndexStart + m.mainViewport.Height - 1
 		if m.selectedRecipe < visibleIndexStart {
-			m.viewport.YOffset--
+			m.mainViewport.YOffset--
 		}
 		if m.selectedRecipe > visibleIndexStop {
-			m.viewport.YOffset++
+			m.mainViewport.YOffset++
 		}
 	}
+}
+
+func (m *model) fetchRecipeCode() {
+	if !m.showCode {
+		return
+	}
+
+	selected := m.currentRecipes()[m.selectedRecipe]
+	cmd := exec.Command("ujust", "-n", selected.name)
+	output, err := cmd.CombinedOutput()
+
+	if err != nil {
+		m.codeViewport.SetContent(err.Error())
+		return
+	}
+
+	m.codeViewport.SetContent(wordwrap.String(string(output), 78))
 }
 
 func (m model) renderTextBlockCustom(s string, padding int, position lipgloss.Position) string {
