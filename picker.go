@@ -68,7 +68,7 @@ var (
 	selectedRecipe = lipgloss.NewStyle().Inherit(bazzitePurple).Bold(true)
 	recipeActive   = lipgloss.NewStyle().Inherit(selectedRecipe)
 	recipeInactive = lipgloss.NewStyle().Inherit(bazziteGrey)
-	descText       = lipgloss.NewStyle().Inherit(bazziteWhite).Border(lipgloss.NormalBorder(), false, true, true).Height(4).Padding(0, 1)
+	descText       = lipgloss.NewStyle().Inherit(bazziteWhite).Border(lipgloss.NormalBorder(), false, true, true).Height(6).Padding(0, 1)
 	controlStyle   = lipgloss.NewStyle().Inherit(bazziteGrey).Italic(true).Inherit(horizontalBorderStyle)
 )
 
