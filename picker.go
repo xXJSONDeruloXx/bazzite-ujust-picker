@@ -68,7 +68,7 @@ var (
 	selectedRecipe = lipgloss.NewStyle().Inherit(bazzitePurple).Bold(true)
 	recipeActive   = lipgloss.NewStyle().Inherit(selectedRecipe)
 	recipeInactive = lipgloss.NewStyle().Inherit(bazziteGrey)
-	descText       = lipgloss.NewStyle().Inherit(bazziteWhite).Border(lipgloss.NormalBorder(), false, true, true).Height(4).Padding(0, 1)
+	descText       = lipgloss.NewStyle().Inherit(bazziteWhite).Border(lipgloss.NormalBorder(), false, true, true).Height(6).Padding(0, 1)
 	controlStyle   = lipgloss.NewStyle().Inherit(bazziteGrey).Italic(true).Inherit(horizontalBorderStyle)
 )
 
@@ -303,14 +303,15 @@ func (m model) footerView() string {
 	var descBlock string
 	if len(m.currentRecipes()) > 0 {
 		r := m.currentRecipes()[m.selectedRecipe]
+		selected := m.renderTextBlockCustom("Selected: "+selectedRecipe.Render(r.name), 4, lipgloss.Left)
+		desc := ""
 		if r.description != "" {
-			selected := m.renderTextBlockCustom("Selected: "+selectedRecipe.Render(r.name), 4, lipgloss.Left)
-			desc := m.renderTextBlockCustom(r.description, 4, lipgloss.Left)
+			desc = m.renderTextBlockCustom(r.description, 4, lipgloss.Left)
 			if m.debug != "" {
 				desc = m.renderTextBlockCustom(m.debug, 4, lipgloss.Left)
 			}
-			descBlock = descText.Render(selected + "\n\n" + desc)
 		}
+		descBlock = descText.Render(selected + "\n\n" + desc)
 	}
 	return m.divider() + "\n" + descBlock
 }
