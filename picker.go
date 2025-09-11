@@ -50,10 +50,10 @@ type model struct {
 var runRecipe string
 
 var (
-	bazzitePurple         = lipgloss.NewStyle().Foreground(lipgloss.Color("5"))       // Bazzite purple/magenta (terminal color 35)
-	bazziteWhite          = lipgloss.NewStyle().Foreground(lipgloss.Color("#faebd7")) // Bazzite white
-	bazziteBlue           = lipgloss.NewStyle().Foreground(lipgloss.Color("#acd7e6")) // Bazzite light blue
-	bazziteGrey           = lipgloss.NewStyle().Foreground(lipgloss.Color("#a8a8a8")) // Bazzite dark grey
+	bazzitePurple         = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Dark: "5", Light: "5"})         // Bazzite purple/magenta (terminal color 5)
+	bazziteWhite          = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Dark: "#faebd7", Light: "240"}) // Bazzite white
+	bazziteBlue           = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Dark: "#acd7e6", Light: "39"})  // Bazzite light blue
+	bazziteGrey           = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Dark: "#a8a8a8", Light: "236"}) // Bazzite dark grey
 	horizontalBorderStyle = lipgloss.NewStyle().Border(lipgloss.NormalBorder(), false, true)
 	titleStyle            = func() lipgloss.Style {
 		b := lipgloss.NormalBorder()
